@@ -1,0 +1,24 @@
+name: Neotics kit
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'neotics/**'
+      - '.github/workflows/neotics.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: |
+          sudo curl -fsSL https://packages.osrfoundation.org/gazebo.gpg -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends gz-harmonic python3-pytest
+      - name: Format and exporter tests
+        run: python3 -m pytest -q neotics/tests
+      - name: Full check in Gazebo
+        run: python3 neotics/tests/ci_gazebo.py
